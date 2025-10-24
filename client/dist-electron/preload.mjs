@@ -11681,10 +11681,10 @@ var range$1 = RangeError;
 var ref$1 = ReferenceError;
 var syntax$1 = SyntaxError;
 var type$1;
-var hasRequiredType;
-function requireType() {
-  if (hasRequiredType) return type$1;
-  hasRequiredType = 1;
+var hasRequiredType$1;
+function requireType$1() {
+  if (hasRequiredType$1) return type$1;
+  hasRequiredType$1 = 1;
   type$1 = TypeError;
   return type$1;
 }
@@ -11933,7 +11933,7 @@ function requireCallBindApplyHelpers$1() {
   if (hasRequiredCallBindApplyHelpers$1) return callBindApplyHelpers$1;
   hasRequiredCallBindApplyHelpers$1 = 1;
   var bind4 = functionBind$1;
-  var $TypeError2 = requireType();
+  var $TypeError2 = requireType$1();
   var $call2 = requireFunctionCall$1();
   var $actualApply = requireActualApply$1();
   callBindApplyHelpers$1 = function callBindBasic(args) {
@@ -12006,7 +12006,7 @@ var $EvalError$1 = _eval$1;
 var $RangeError$1 = range$1;
 var $ReferenceError$1 = ref$1;
 var $SyntaxError$1 = syntax$1;
-var $TypeError$3 = requireType();
+var $TypeError$3 = requireType$1();
 var $URIError$1 = uri$1;
 var abs$2 = abs$3;
 var floor$2 = floor$3;
@@ -12337,7 +12337,7 @@ var GetIntrinsic$1 = getIntrinsic$1;
 var $defineProperty$3 = GetIntrinsic$1("%Object.defineProperty%", true);
 var hasToStringTag$1 = requireShams$2()();
 var hasOwn$4 = hasown$1;
-var $TypeError$2 = requireType();
+var $TypeError$2 = requireType$1();
 var toStringTag$1 = hasToStringTag$1 ? Symbol.toStringTag : null;
 var esSetTostringtag$1 = function setToStringTag(object, value) {
   var overrideIfSet = arguments.length > 2 && !!arguments[2] && arguments[2].force;
@@ -28039,7 +28039,14 @@ var _eval = EvalError;
 var range = RangeError;
 var ref = ReferenceError;
 var syntax = SyntaxError;
-var type = TypeError;
+var type;
+var hasRequiredType;
+function requireType() {
+  if (hasRequiredType) return type;
+  hasRequiredType = 1;
+  type = TypeError;
+  return type;
+}
 var uri = URIError;
 var abs$1 = Math.abs;
 var floor$1 = Math.floor;
@@ -28285,7 +28292,7 @@ function requireCallBindApplyHelpers() {
   if (hasRequiredCallBindApplyHelpers) return callBindApplyHelpers;
   hasRequiredCallBindApplyHelpers = 1;
   var bind4 = functionBind;
-  var $TypeError2 = type;
+  var $TypeError2 = requireType();
   var $call2 = requireFunctionCall();
   var $actualApply = requireActualApply();
   callBindApplyHelpers = function callBindBasic(args) {
@@ -28358,7 +28365,7 @@ var $EvalError = _eval;
 var $RangeError = range;
 var $ReferenceError = ref;
 var $SyntaxError = syntax;
-var $TypeError$1 = type;
+var $TypeError$1 = requireType();
 var $URIError = uri;
 var abs = abs$1;
 var floor = floor$1;
@@ -28689,7 +28696,7 @@ var GetIntrinsic3 = getIntrinsic;
 var $defineProperty = GetIntrinsic3("%Object.defineProperty%", true);
 var hasToStringTag = requireShams()();
 var hasOwn$1 = hasown;
-var $TypeError = type;
+var $TypeError = requireType();
 var toStringTag = hasToStringTag ? Symbol.toStringTag : null;
 var esSetTostringtag = function setToStringTag2(object, value) {
   var overrideIfSet = arguments.length > 2 && !!arguments[2] && arguments[2].force;
