@@ -186,7 +186,7 @@ body {
 }
 
 .response-box {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -199,6 +199,9 @@ body {
   font-size: 14px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.95);
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .response-box:empty::before {

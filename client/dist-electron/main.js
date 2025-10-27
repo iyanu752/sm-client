@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { ipcMain, desktopCapturer, app, BrowserWindow } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -11,33 +11,47 @@ const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
 let win;
 function createWindow() {
+  const preloadPath = path.join(__dirname, "preload.js");
+  console.log("==========================================");
+  console.log("🔍 Preload path:", preloadPath);
+  console.log("🔍 __dirname:", __dirname);
+  console.log("🔍 process.cwd():", process.cwd());
+  console.log("🔍 MAIN_DIST:", MAIN_DIST);
+  const fs = require2("fs");
+  const preloadExists = fs.existsSync(preloadPath);
+  console.log("🔍 Preload exists?", preloadExists);
+  if (!preloadExists) {
+    console.error("❌ PRELOAD FILE NOT FOUND!");
+    console.log("📁 Contents of dist-electron:");
+    try {
+      const files = fs.readdirSync(__dirname);
+      files.forEach((file) => console.log("  -", file));
+    } catch (e) {
+      console.error("Could not read directory:", e);
+    }
+  }
+  console.log("==========================================");
   win = new BrowserWindow({
-    width: 500,
-    height: 500,
+    width: 600,
+    height: 600,
     frame: false,
-    // no title bar
     transparent: true,
-    // allows glass effect
     alwaysOnTop: true,
-    // floats above all apps
     hasShadow: false,
     resizable: true,
     skipTaskbar: true,
-    // hides from taskbar/dock
     focusable: true,
     backgroundColor: "#00000000",
-    // fully transparent background (important!)
-    // macOS-specific glass effect (ignored on Windows/Linux)
     ...process.platform === "darwin" && {
       vibrancy: "under-window",
-      // options: 'under-window', 'fullscreen-ui', 'hud', 'popover'
       visualEffectState: "active"
     },
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
-      preload: path.join(__dirname, "preload.mjs"),
+      preload: preloadPath,
       nodeIntegration: false,
-      contextIsolation: true
+      contextIsolation: true,
+      devTools: true
     }
   });
   win.on("will-move", (event, bounds) => {
@@ -58,6 +72,36 @@ function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
 }
+ipcMain.handle("capture-screen", async () => {
+  try {
+    const sources = await desktopCapturer.getSources({
+      types: ["screen"],
+      thumbnailSize: { width: 1920, height: 1080 }
+    });
+    if (sources.length === 0) {
+      throw new Error("No screen sources found");
+    }
+    const primarySource = sources[0];
+    const thumbnail = primarySource.thumbnail;
+    const dataURL = thumbnail.toDataURL();
+    return dataURL;
+  } catch (error) {
+    console.error("Screen capture error:", error);
+    throw error;
+  }
+});
+ipcMain.handle("ask-ai", async (_event, prompt) => {
+  console.log("AI prompt:", prompt);
+  return { answer: "AI response placeholder" };
+});
+ipcMain.handle("analyze-image", async (_event, filePath) => {
+  console.log("Analyzing image:", filePath);
+  return { analysis: "Image analysis placeholder" };
+});
+ipcMain.handle("transcribe-audio", async (_event, filePath) => {
+  console.log("Transcribing audio:", filePath);
+  return { transcription: "Audio transcription placeholder" };
+});
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
