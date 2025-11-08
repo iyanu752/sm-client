@@ -32,8 +32,8 @@ function createWindow() {
   }
   console.log("==========================================");
   win = new BrowserWindow({
-    width: 600,
-    height: 600,
+    width: 500,
+    height: 500,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -54,6 +54,10 @@ function createWindow() {
       devTools: true
     }
   });
+  win.setContentProtection(true);
+  if (process.platform === "darwin") {
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
   win.on("will-move", (event, bounds) => {
     const { screen } = require2("electron");
     const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y });
@@ -101,6 +105,13 @@ ipcMain.handle("analyze-image", async (_event, filePath) => {
 ipcMain.handle("transcribe-audio", async (_event, filePath) => {
   console.log("Transcribing audio:", filePath);
   return { transcription: "Audio transcription placeholder" };
+});
+ipcMain.handle("toggle-screen-protection", async (_event, enabled) => {
+  if (win) {
+    win.setContentProtection(enabled);
+    return { success: true, enabled };
+  }
+  return { success: false };
 });
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

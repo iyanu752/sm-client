@@ -190,7 +190,7 @@ function App() {
       <div className="header">
         <div className="logo">
           <div className="logo-icon">🎯</div>
-          <span>Interview AI</span>
+          <span>Knowly</span>
         </div>
         <button
           className={`listening-btn ${isListening ? "listening" : ""}`}
@@ -206,7 +206,7 @@ function App() {
         </button>
       </div>
 
-      <button className="main-btn" onClick={handleMainButtonClick}>
+      <button className="main-btn " onClick={handleMainButtonClick}>
         What should I say?
       </button>
 

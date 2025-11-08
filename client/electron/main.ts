@@ -17,7 +17,6 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 
 function createWindow() {
-  // With vite-plugin-electron, the preload is compiled to dist-electron
   const preloadPath = path.join(__dirname, 'preload.js')
   
   console.log('==========================================')
@@ -26,7 +25,6 @@ function createWindow() {
   console.log('🔍 process.cwd():', process.cwd())
   console.log('🔍 MAIN_DIST:', MAIN_DIST)
   
-  // Check if file exists
   const fs = require('fs')
   const preloadExists = fs.existsSync(preloadPath)
   console.log('🔍 Preload exists?', preloadExists)
@@ -44,8 +42,8 @@ function createWindow() {
   console.log('==========================================')
   
   win = new BrowserWindow({
-    width: 600,
-    height: 600,
+    width: 500,
+    height: 500,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -68,6 +66,16 @@ function createWindow() {
       devTools: true,
     },
   })
+
+  // 🔒 CRITICAL: Exclude window from screen capture
+  // This makes the app invisible to screen sharing (Google Meet, Zoom, etc.)
+  win.setContentProtection(true)
+  
+  // Additional platform-specific settings
+  if (process.platform === 'darwin') {
+    // macOS: Set window level to prevent capture
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  }
 
   win.on('will-move', (event, bounds) => {
     const { screen } = require('electron')
@@ -103,11 +111,8 @@ ipcMain.handle('capture-screen', async () => {
       throw new Error('No screen sources found')
     }
 
-    // Get the primary screen (first one)
     const primarySource = sources[0]
     const thumbnail = primarySource.thumbnail
-    
-    // Convert to data URL
     const dataURL = thumbnail.toDataURL()
     
     return dataURL
@@ -136,6 +141,15 @@ ipcMain.handle('transcribe-audio', async (_event, filePath: string) => {
   console.log('Transcribing audio:', filePath)
   // TODO: Implement audio transcription
   return { transcription: 'Audio transcription placeholder' }
+})
+
+// 🔄 Optional: IPC Handler to toggle screen capture protection
+ipcMain.handle('toggle-screen-protection', async (_event, enabled: boolean) => {
+  if (win) {
+    win.setContentProtection(enabled)
+    return { success: true, enabled }
+  }
+  return { success: false }
 })
 
 app.on('window-all-closed', () => {
