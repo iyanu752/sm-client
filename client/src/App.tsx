@@ -12,32 +12,40 @@ function App() {
 
   // 🔍 Debug: Log what's available on window
   console.log("window.electronAPI:", window.electronAPI);
-  console.log("Available keys:", window.electronAPI ? Object.keys(window.electronAPI) : "undefined");
+  console.log(
+    "Available keys:",
+    window.electronAPI ? Object.keys(window.electronAPI) : "undefined"
+  );
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordedQuestionRef = useRef<string>("");
 
   // 🎤 Start or stop recording
+
   const handleListenClick = async () => {
     if (!isListening) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
         const mediaRecorder = new MediaRecorder(stream);
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
 
-        mediaRecorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
+        mediaRecorder.ondataavailable = (e) =>
+          audioChunksRef.current.push(e.data);
 
         mediaRecorder.onstop = async () => {
+          console.log("Recording stopped. Starting transcription...");
           const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
           setStatus("Transcribing...");
 
           try {
             const formData = new FormData();
-            formData.append("audio", audioBlob, "recording.webm");
+            formData.append("file", audioBlob, "recording.webm"); // ✅ matches backend
 
-            const res = await fetch(`${API_BASE}/speech/transcribe`, {
+            const res = await fetch(`${API_BASE}/speech/upload`, {
               method: "POST",
               body: formData,
             });
@@ -45,22 +53,11 @@ function App() {
             if (!res.ok) throw new Error(`Transcription failed: ${res.status}`);
             const result = await res.json();
 
-            recordedQuestionRef.current = result.question;
-            setOutput(`Q: ${result.question}\n\nProcessing answer...`);
-            setStatus("Getting AI response...");
+            // ✅ Use what the backend actually returns
+            // Backend returns: { transcription, aiResponse }
+            recordedQuestionRef.current = result.transcription;
 
-            const aiRes = await fetch(`${API_BASE}/ai/ask`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ prompt: result.question }),
-            });
-
-            if (!aiRes.ok) throw new Error(`AI request failed: ${aiRes.status}`);
-            const aiResult = await aiRes.json();
-
-            setOutput(`Q: ${result.question}\n\nA: ${aiResult.answer}`);
+            setOutput(`🎤 Q: ${result.transcription}\n\n💡 A: ${result.aiResponse}`);
             setStatus("Ready");
           } catch (err) {
             console.error(err);
@@ -68,6 +65,7 @@ function App() {
             setStatus("Error");
           }
         };
+
 
         mediaRecorder.start();
         setIsListening(true);
@@ -85,7 +83,6 @@ function App() {
       setStatus("Processing...");
     }
   };
-
   const handleMainButtonClick = async () => {
     if (!recordedQuestionRef.current) {
       setOutput("Please record a question first by clicking the mic button.");
@@ -139,23 +136,30 @@ function App() {
       }
     } else {
       setStatus("Capturing screen...");
-      
+
       // ✅ Fixed: Check for electronAPI instead of ipcRenderer
-      if (!window.electronAPI || typeof window.electronAPI.captureScreen !== 'function') {
+      if (
+        !window.electronAPI ||
+        typeof window.electronAPI.captureScreen !== "function"
+      ) {
         setOutput("Screen capture not available. Are you running in Electron?");
         setStatus("Error");
         return;
       }
-      
+
       try {
         const imageBase64 = await window.electronAPI.captureScreen();
         setStatus("Analyzing screen...");
 
         const byteString = atob(imageBase64.split(",")[1]);
-        const mimeString = imageBase64.split(",")[0].split(":")[1].split(";")[0];
+        const mimeString = imageBase64
+          .split(",")[0]
+          .split(":")[1]
+          .split(";")[0];
         const ab = new ArrayBuffer(byteString.length);
         const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+        for (let i = 0; i < byteString.length; i++)
+          ia[i] = byteString.charCodeAt(i);
         const blob = new Blob([ab], { type: mimeString });
 
         const formData = new FormData();
@@ -170,7 +174,12 @@ function App() {
         const result = await res.json();
 
         setOutput(
-          `Screen Analysis:\n\n${result.aiResponse || result.description || result.analysis || JSON.stringify(result)}`
+          `Screen Analysis:\n\n${
+            result.aiResponse ||
+            result.description ||
+            result.analysis ||
+            JSON.stringify(result)
+          }`
         );
         setStatus("Ready");
       } catch (err) {
@@ -197,7 +206,13 @@ function App() {
           onClick={handleListenClick}
           title="Listen to interviewer"
         >
-          <svg className="mic-icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth="2">
+          <svg
+            className="mic-icon"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            fill="none"
+            strokeWidth="2"
+          >
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
             <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
             <line x1="12" y1="19" x2="12" y2="23" />
@@ -223,8 +238,18 @@ function App() {
             placeholder="Ask about code or screen content..."
           />
         </div>
-        <button onClick={handleSendClick} className="send-btn" title="Send or analyze screen">
-          <svg className="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <button
+          onClick={handleSendClick}
+          className="send-btn"
+          title="Send or analyze screen"
+        >
+          <svg
+            className="arrow-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <line x1="22" y1="2" x2="11" y2="13" />
             <polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
@@ -232,7 +257,11 @@ function App() {
       </div>
 
       <div className="status-indicator">
-        <div className={`status-dot ${status === "Listening..." ? "listening" : ""}`}></div>
+        <div
+          className={`status-dot ${
+            status === "Listening..." ? "listening" : ""
+          }`}
+        ></div>
         <span>{status}</span>
       </div>
     </div>
