@@ -44,6 +44,8 @@ function createWindow() {
   win = new BrowserWindow({
     width: 500,
     height: 500,
+    minWidth: 380,
+    minHeight: 360,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -150,6 +152,16 @@ ipcMain.handle('toggle-screen-protection', async (_event, enabled: boolean) => {
     return { success: true, enabled }
   }
   return { success: false }
+})
+
+ipcMain.handle('resize-window', async (_event, size: { width: number; height: number }) => {
+  if (!win) return { success: false }
+
+  const width = Math.max(380, Math.min(Math.round(size.width), 960))
+  const height = Math.max(360, Math.min(Math.round(size.height), 900))
+  win.setSize(width, height)
+
+  return { success: true, width, height }
 })
 
 app.on('window-all-closed', () => {

@@ -25,6 +25,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
     console.log("🎙️ transcribeAudio invoked:", filePath);
     return ipcRenderer.invoke("transcribe-audio", filePath);
   },
+
+  resizeWindow: (width: number, height: number) => {
+    return ipcRenderer.invoke("resize-window", { width, height });
+  },
 });
 
 console.log("✅ Preload script loaded successfully - electronAPI is available on window");

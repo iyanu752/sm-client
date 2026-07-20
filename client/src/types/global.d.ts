@@ -15,6 +15,7 @@ declare global {
       analyzeImage(filePath: string): Promise<any>;
       transcribeAudio(filePath: string): Promise<any>;
       captureScreen(): Promise<string>;
+      resizeWindow(width: number, height: number): Promise<any>;
     };
   }
 }

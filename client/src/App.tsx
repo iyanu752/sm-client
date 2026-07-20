@@ -20,6 +20,13 @@ function App() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordedQuestionRef = useRef<string>("");
+  const resizeStartRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   // 🎤 Start or stop recording
 
@@ -194,12 +201,51 @@ function App() {
     if (e.key === "Enter") handleSendClick();
   };
 
+  const handleResizePointerMove = (event: PointerEvent) => {
+    const start = resizeStartRef.current;
+    if (!start) return;
+
+    const nextWidth = start.width + event.clientX - start.x;
+    const nextHeight = start.height + event.clientY - start.y;
+    window.electronAPI?.resizeWindow?.(nextWidth, nextHeight);
+  };
+
+  const handleResizePointerUp = (event: PointerEvent) => {
+    const start = resizeStartRef.current;
+    if (!start || event.pointerId !== start.pointerId) return;
+
+    resizeStartRef.current = null;
+    window.removeEventListener("pointermove", handleResizePointerMove);
+    window.removeEventListener("pointerup", handleResizePointerUp);
+  };
+
+  const handleResizePointerDown = (event: React.PointerEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    resizeStartRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+
+    window.addEventListener("pointermove", handleResizePointerMove);
+    window.addEventListener("pointerup", handleResizePointerUp);
+  };
+
   return (
     <div className="container">
       <div className="header">
         <div className="logo">
           <div className="logo-icon">🎯</div>
           <span>Knowly</span>
+        </div>
+        <div className="drag-hint" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
         </div>
         <button
           className={`listening-btn ${isListening ? "listening" : ""}`}
@@ -222,7 +268,7 @@ function App() {
       </div>
 
       <button className="main-btn " onClick={handleMainButtonClick}>
-        What should I say?
+        Answer interview prompt
       </button>
 
       <div className="response-box">{output}</div>
@@ -264,6 +310,13 @@ function App() {
         ></div>
         <span>{status}</span>
       </div>
+      <div
+        className="resize-handle"
+        onPointerDown={handleResizePointerDown}
+        title="Resize"
+        aria-label="Resize window"
+        role="button"
+      />
     </div>
   );
 }
